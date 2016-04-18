@@ -1,8 +1,22 @@
 notifications:
   email: false
 
+sudo: required
+dist: trusty
+
 language: c
 compiler: gcc
+
+addons:
+  apt:
+    packages:
+      - libgpgme11-dev
+      - libnotmuch-dev
+      - libtokyocabinet-dev
+      - libgdbm-dev
+      - libdb-dev
+#     - libslang2-dev
+#     - libqdbm-dev
 
 env:
   global:
