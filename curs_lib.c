@@ -157,7 +157,7 @@ int _mutt_get_field (const char *field, char *buf, size_t buflen, int complete, 
   
   do
   {
-    CLEARLINE (LINES-1);
+    mutt_window_clearline (MuttMessageWindow, 0);
     SETCOLOR (MT_COLOR_PROMPT);
     addstr ((char *)field); /* cast to get around bad prototypes */
     NORMAL_COLOR;
@@ -166,7 +166,7 @@ int _mutt_get_field (const char *field, char *buf, size_t buflen, int complete, 
     ret = _mutt_enter_string (buf, buflen, y, x, complete, multiple, files, numfiles, es);
   }
   while (ret == 1);
-  CLEARLINE (LINES-1);
+  mutt_window_clearline (MuttMessageWindow, 0);
   mutt_free_enter_state (&es);
   
   return (ret);
@@ -187,7 +187,7 @@ void mutt_clear_error (void)
 {
   Errorbuf[0] = 0;
   if (!option(OPTNOCURSES))
-    CLEARLINE (LINES-1);
+    mutt_window_clearline (MuttMessageWindow, 0);
 }
 
 void mutt_edit_file (const char *editor, const char *data)
@@ -234,7 +234,7 @@ int mutt_yesorno (const char *msg, int def)
             !REGCOMP (&reno, expr, REG_NOSUB);
 #endif
 
-  CLEARLINE(LINES-1);
+  mutt_window_clearline (MuttMessageWindow, 0);
 
   /*
    * In order to prevent the default answer to the question to wrapped
@@ -245,7 +245,7 @@ int mutt_yesorno (const char *msg, int def)
   safe_asprintf (&answer_string, " ([%s]/%s): ", def == M_YES ? yes : no, def == M_YES ? no : yes);
   answer_string_len = mutt_strwidth (answer_string);
   /* maxlen here is sort of arbitrary, so pick a reasonable upper bound */
-  msglen = mutt_wstr_trunc (msg, 4*COLS, COLS - answer_string_len, NULL);
+  msglen = mutt_wstr_trunc (msg, 4*MuttMessageWindow->cols, MuttMessageWindow->cols - answer_string_len, NULL);
   SETCOLOR (MT_COLOR_PROMPT);
   addnstr (msg, msglen);
   addstr (answer_string);
@@ -338,16 +338,16 @@ static void curses_message (int error, const char *fmt, va_list ap)
 
   dprint (1, (debugfile, "%s\n", scratch));
   mutt_format_string (Errorbuf, sizeof (Errorbuf),
-		      0, COLS, FMT_LEFT, 0, scratch, sizeof (scratch), 0);
+		      0, MuttMessageWindow->cols, FMT_LEFT, 0, scratch, sizeof (scratch), 0);
 
   if (!option (OPTKEEPQUIET))
   {
     if (error)
       BEEP ();
     SETCOLOR (error ? MT_COLOR_ERROR : MT_COLOR_MESSAGE);
-    mvaddstr (LINES-1, 0, Errorbuf);
+    mutt_window_mvaddstr (MuttMessageWindow, 0, 0, Errorbuf);
     NORMAL_COLOR;
-    clrtoeol ();
+    mutt_window_clrtoeol (MuttMessageWindow);
     mutt_refresh ();
   }
 
@@ -600,9 +600,9 @@ void mutt_show_error (void)
     return;
   
   SETCOLOR (option (OPTMSGERR) ? MT_COLOR_ERROR : MT_COLOR_MESSAGE);
-  mvaddstr(LINES-1, 0, Errorbuf);
+  mutt_window_mvaddstr (MuttMessageWindow, 0, 0, Errorbuf);
   NORMAL_COLOR;
-  clrtoeol();
+  mutt_window_clrtoeol(MuttMessageWindow);
 }
 
 void mutt_endwin (const char *msg)
@@ -697,18 +697,18 @@ int _mutt_enter_fname (const char *prompt, char *buf, size_t blen, int *redraw, 
   event_t ch;
 
   SETCOLOR (MT_COLOR_PROMPT);
-  mvaddstr (LINES-1, 0, (char *) prompt);
+  mutt_window_mvaddstr (MuttMessageWindow, 0, 0, (char *) prompt);
   addstr (_(" ('?' for list): "));
   NORMAL_COLOR;
   if (buf[0])
     addstr (buf);
-  clrtoeol ();
+  mutt_window_clrtoeol (MuttMessageWindow);
   mutt_refresh ();
 
   ch = mutt_getch();
   if (ch.ch < 0)
   {
-    CLEARLINE (LINES-1);
+    mutt_window_clearline (MuttMessageWindow, 0);
     return (-1);
   }
   else if (ch.ch == '?')
@@ -821,9 +821,9 @@ int mutt_multi_choice (char *prompt, char *letters)
   char *p;
 
   SETCOLOR (MT_COLOR_PROMPT);
-  mvaddstr (LINES - 1, 0, prompt);
+  mutt_window_mvaddstr (MuttMessageWindow, 0, 0, prompt);
   NORMAL_COLOR;
-  clrtoeol ();
+  mutt_window_clrtoeol (MuttMessageWindow);
   FOREVER
   {
     mutt_refresh ();
@@ -851,7 +851,7 @@ int mutt_multi_choice (char *prompt, char *letters)
     }
     BEEP ();
   }
-  CLEARLINE (LINES - 1);
+  mutt_window_clearline (MuttMessageWindow, 0);
   mutt_refresh ();
   return choice;
 }
