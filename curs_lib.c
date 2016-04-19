@@ -63,6 +63,11 @@ static size_t UngetCount = 0;
 static size_t UngetLen = 0;
 static event_t *UngetKeyEvents;
 
+mutt_window_t *MuttHelpWindow = NULL;
+mutt_window_t *MuttIndexWindow = NULL;
+mutt_window_t *MuttStatusWindow = NULL;
+mutt_window_t *MuttMessageWindow = NULL;
+
 void mutt_refresh (void)
 {
   /* don't refresh when we are waiting for a child. */
@@ -478,6 +483,116 @@ out:
   if (pos >= progress->size)
     mutt_clear_error ();
 }
+
+void mutt_init_windows ()
+{
+  MuttHelpWindow = safe_calloc (sizeof (mutt_window_t), 1);
+  MuttIndexWindow = safe_calloc (sizeof (mutt_window_t), 1);
+  MuttStatusWindow = safe_calloc (sizeof (mutt_window_t), 1);
+  MuttMessageWindow = safe_calloc (sizeof (mutt_window_t), 1);
+
+  mutt_reflow_windows ();
+}
+
+void mutt_free_windows ()
+{
+  FREE (&MuttHelpWindow);
+  FREE (&MuttIndexWindow);
+  FREE (&MuttStatusWindow);
+  FREE (&MuttMessageWindow);
+}
+
+void mutt_reflow_windows (void)
+{
+  if (option (OPTNOCURSES))
+    return;
+
+  dprint (2, (debugfile, "In mutt_reflow_windows\n"));
+
+  if (option (OPTHELP))
+    MuttHelpWindow->rows = 1;
+  else
+    MuttHelpWindow->rows = 0;
+  MuttHelpWindow->cols = COLS;
+  MuttHelpWindow->row_offset = option (OPTSTATUSONTOP) ? LINES - 2 : 0;
+  MuttHelpWindow->col_offset = 0;
+
+  MuttStatusWindow->rows = 1;
+  MuttStatusWindow->cols = COLS;
+  MuttStatusWindow->row_offset = option (OPTSTATUSONTOP) ? 0 : LINES - 2;
+  MuttStatusWindow->col_offset = 0;
+
+  MuttMessageWindow->rows = 1;
+  MuttMessageWindow->cols = COLS;
+  MuttMessageWindow->row_offset = LINES - 1;
+  MuttMessageWindow->col_offset = 0;
+
+  MuttIndexWindow->rows = LINES - MuttHelpWindow->rows - MuttStatusWindow->rows -
+                          MuttMessageWindow->rows;
+  MuttIndexWindow->cols = COLS;
+  MuttIndexWindow->row_offset = option (OPTSTATUSONTOP) ? MuttStatusWindow->rows :
+                                                          MuttHelpWindow->rows;
+  MuttIndexWindow->col_offset = 0;
+}
+
+int mutt_window_move (mutt_window_t *win, int row, int col)
+{
+  return move (win->row_offset + row, win->col_offset + col);
+}
+
+int mutt_window_mvaddch (mutt_window_t *win, int row, int col, const chtype ch)
+{
+  return mvaddch (win->row_offset + row, win->col_offset + col, ch);
+}
+
+int mutt_window_mvaddstr (mutt_window_t *win, int row, int col, const char *str)
+{
+  return mvaddstr (win->row_offset + row, win->col_offset + col, str);
+}
+
+int mutt_window_mvprintw (mutt_window_t *win, int row, int col, const char *fmt, ...)
+{
+  va_list ap;
+  int rv;
+
+  if ((rv = mutt_window_move (win, row, col) != ERR))
+  {
+    va_start (ap, fmt);
+    rv = vw_printw (stdscr, fmt, ap);
+    va_end (ap);
+  }
+
+  return rv;
+}
+
+/* Assumes the cursor has already been positioned within the
+ * window.
+ */
+void mutt_window_clrtoeol (mutt_window_t *win)
+{
+  int row, col, curcol;
+
+  if (win->col_offset + win->cols == COLS)
+    clrtoeol ();
+  else
+  {
+    getyx (stdscr, row, col);
+    curcol = col;
+    while (curcol < win->col_offset + win->cols)
+    {
+      addch (' ');
+      curcol++;
+    }
+    move (row, col);
+  }
+}
+
+void mutt_window_clearline (mutt_window_t *win, int row)
+{
+  mutt_window_move (win, row, 0);
+  mutt_window_clrtoeol (win);
+}
+
 
 void mutt_show_error (void)
 {
