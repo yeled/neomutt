@@ -185,14 +185,14 @@ void mutt_window_clrtoeol (mutt_window_t *);
 void mutt_window_clearline (mutt_window_t *, int row);
 
 
-static inline int mutt_term_width(short wrap)
+static inline int mutt_window_wrap_cols(mutt_window_t *win, short wrap)
 {
   if (wrap < 0)
-    return COLS > -wrap ? COLS + wrap : COLS;
+    return win->cols > -wrap ? win->cols + wrap : win->cols;
   else if (wrap)
-    return wrap < COLS ? wrap : COLS;
+    return wrap < win->cols ? wrap : win->cols;
   else
-    return COLS;
+    return win->cols;
 }
 
 extern int *ColorQuote;
