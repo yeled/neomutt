@@ -509,30 +509,49 @@ void mutt_reflow_windows (void)
 
   dprint (2, (debugfile, "In mutt_reflow_windows\n"));
 
+  /* Remaining space */
+  int x = 0;
+  int y = 0;
+  int w = COLS;
+  int h = LINES;
+
+  MuttMessageWindow->rows = 1;
+  MuttMessageWindow->cols = w;
+  MuttMessageWindow->row_offset = h - 1;
+  MuttMessageWindow->col_offset = 0;
+
+  h -= MuttMessageWindow->rows;
+
   if (option (OPTHELP))
     MuttHelpWindow->rows = 1;
   else
     MuttHelpWindow->rows = 0;
-  MuttHelpWindow->cols = COLS;
-  MuttHelpWindow->row_offset = option (OPTSTATUSONTOP) ? LINES - 2 : 0;
-  MuttHelpWindow->col_offset = 0;
+  MuttHelpWindow->cols = w;
+  MuttHelpWindow->col_offset = x;
+  if (option (OPTSTATUSONTOP)) {
+    MuttHelpWindow->row_offset = y + h - 1;
+  } else {
+    MuttHelpWindow->row_offset = y;
+    y += MuttHelpWindow->rows;
+  }
+  h -= MuttHelpWindow->rows;
 
   MuttStatusWindow->rows = 1;
-  MuttStatusWindow->cols = COLS;
-  MuttStatusWindow->row_offset = option (OPTSTATUSONTOP) ? 0 : LINES - 2;
-  MuttStatusWindow->col_offset = 0;
+  MuttStatusWindow->cols = w;
+  MuttStatusWindow->col_offset = x;
+  if (option (OPTSTATUSONTOP)) {
+    MuttStatusWindow->row_offset = y;
+    y += MuttStatusWindow->rows;
+  } else {
+    MuttStatusWindow->row_offset = y + h - 1;
+  }
+  h -= MuttStatusWindow->rows;
 
-  MuttMessageWindow->rows = 1;
-  MuttMessageWindow->cols = COLS;
-  MuttMessageWindow->row_offset = LINES - 1;
-  MuttMessageWindow->col_offset = 0;
 
-  MuttIndexWindow->rows = LINES - MuttHelpWindow->rows - MuttStatusWindow->rows -
-                          MuttMessageWindow->rows;
-  MuttIndexWindow->cols = COLS;
-  MuttIndexWindow->row_offset = option (OPTSTATUSONTOP) ? MuttStatusWindow->rows :
-                                                          MuttHelpWindow->rows;
-  MuttIndexWindow->col_offset = 0;
+  MuttIndexWindow->rows = h;
+  MuttIndexWindow->cols = w;
+  MuttIndexWindow->row_offset = y;
+  MuttIndexWindow->col_offset = x;
 }
 
 int mutt_window_move (mutt_window_t *win, int row, int col)
