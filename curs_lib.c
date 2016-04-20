@@ -151,7 +151,7 @@ event_t mutt_getch (void)
 int _mutt_get_field (const char *field, char *buf, size_t buflen, int complete, int multiple, char ***files, int *numfiles)
 {
   int ret;
-  int x;
+  int x, y;
 
   ENTER_STATE *es = mutt_new_enter_state();
   
@@ -162,7 +162,7 @@ int _mutt_get_field (const char *field, char *buf, size_t buflen, int complete, 
     addstr ((char *)field); /* cast to get around bad prototypes */
     NORMAL_COLOR;
     mutt_refresh ();
-    x = getcurx (stdscr);
+    getyx (stdscr, y, x);
     ret = _mutt_enter_string (buf, buflen, x, complete, multiple, files, numfiles, es);
   }
   while (ret == 1);
@@ -577,7 +577,12 @@ int mutt_window_mvprintw (mutt_window_t *win, int row, int col, const char *fmt,
   if ((rv = mutt_window_move (win, row, col) != ERR))
   {
     va_start (ap, fmt);
+#ifdef USE_SLANG_CURSES
+    SLsmg_vprintf (fmt, ap);
+    rv = 0;
+#else
     rv = vw_printw (stdscr, fmt, ap);
+#endif
     va_end (ap);
   }
 
