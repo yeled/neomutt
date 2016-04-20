@@ -1282,7 +1282,7 @@ void mutt_FormatString (char *dest,		/* output buffer */
 	  pl = pw = 1;
 
 	/* see if there's room to add content, else ignore */
-	if ((col < COLS && wlen < destlen) || soft)
+	if ((col < (COLS - SidebarWidth) && (wlen < destlen)) || soft)
 	{
 	  int pad;
 

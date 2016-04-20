@@ -67,6 +67,9 @@ mutt_window_t *MuttHelpWindow = NULL;
 mutt_window_t *MuttIndexWindow = NULL;
 mutt_window_t *MuttStatusWindow = NULL;
 mutt_window_t *MuttMessageWindow = NULL;
+#ifdef USE_SIDEBAR
+mutt_window_t *MuttSidebarWindow = NULL;
+#endif
 
 void mutt_refresh (void)
 {
@@ -490,6 +493,9 @@ void mutt_init_windows ()
   MuttIndexWindow = safe_calloc (sizeof (mutt_window_t), 1);
   MuttStatusWindow = safe_calloc (sizeof (mutt_window_t), 1);
   MuttMessageWindow = safe_calloc (sizeof (mutt_window_t), 1);
+#ifdef USE_SIDEBAR
+  MuttSidebarWindow = safe_calloc (sizeof (mutt_window_t), 1);
+#endif
 
   mutt_reflow_windows ();
 }
@@ -500,6 +506,9 @@ void mutt_free_windows ()
   FREE (&MuttIndexWindow);
   FREE (&MuttStatusWindow);
   FREE (&MuttMessageWindow);
+#ifdef USE_SIDEBAR
+  FREE (&MuttSidebarWindow);
+#endif
 }
 
 void mutt_reflow_windows (void)
@@ -547,6 +556,20 @@ void mutt_reflow_windows (void)
   }
   h -= MuttStatusWindow->rows;
 
+#ifdef USE_SIDEBAR
+  MuttSidebarWindow->rows = h;
+  if (option (OPTSIDEBAR)) {
+    MuttSidebarWindow->cols = SidebarWidth;
+  } else {
+    MuttSidebarWindow->cols = 0;
+  }
+  MuttSidebarWindow->row_offset = y;
+  // MuttSidebarWindow->col_offset = w - SidebarWidth;
+  MuttSidebarWindow->col_offset = x;
+
+  x += MuttSidebarWindow->cols;
+  w -= MuttSidebarWindow->cols;
+#endif
 
   MuttIndexWindow->rows = h;
   MuttIndexWindow->cols = w;

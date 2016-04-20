@@ -29,6 +29,9 @@
 #include "pager.h"
 #include "attach.h"
 #include "mbyte.h"
+#ifdef USE_SIDEBAR
+#include "sidebar.h"
+#endif
 
 #include "mutt_crypt.h"
 
@@ -2541,8 +2544,12 @@ search_next:
 	  ch = 0;
 	}
 
-	if (option (OPTFORCEREDRAWPAGER))
+	if (option (OPTFORCEREDRAWPAGER)) {
 	  redraw = REDRAW_FULL;
+#ifdef USE_SIDEBAR
+	  sb_draw();
+#endif
+	}
 	unset_option (OPTFORCEREDRAWINDEX);
 	unset_option (OPTFORCEREDRAWPAGER);
 	break;
@@ -2819,6 +2826,23 @@ search_next:
       case OP_WHAT_KEY:
 	mutt_what_key ();
 	break;
+
+#ifdef USE_SIDEBAR
+      case OP_SIDEBAR_NEXT:
+      case OP_SIDEBAR_NEXT_NEW:
+      case OP_SIDEBAR_PAGE_DOWN:
+      case OP_SIDEBAR_PAGE_UP:
+      case OP_SIDEBAR_PREV:
+      case OP_SIDEBAR_PREV_NEW:
+	sb_change_mailbox (ch);
+	break;
+
+      case OP_SIDEBAR_TOGGLE_VISIBLE:
+	toggle_option (OPTSIDEBAR);
+        mutt_reflow_windows();
+	redraw = REDRAW_FULL;
+	break;
+#endif
 
       default:
 	ch = -1;
