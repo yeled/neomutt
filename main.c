@@ -171,7 +171,7 @@ int main (int argc, char **argv)
 #ifdef USE_SIDEBAR
   char folder[PATH_MAX] = "";
 #else
-  char folder[_POSIX_PATH_MAX] = "";
+  char folder[_POSIX_PATH_MAX  + LONG_STRING + 32] = "";
 #endif
   char *subject = NULL;
   char *includeFile = NULL;

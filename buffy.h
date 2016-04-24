@@ -25,7 +25,7 @@
 
 typedef struct buffy_t
 {
-  char path[_POSIX_PATH_MAX];
+  char *path;
 #ifdef USE_SIDEBAR
   char realpath[_POSIX_PATH_MAX];
 #endif

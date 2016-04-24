@@ -210,7 +210,7 @@ static BUFFY *buffy_new (const char *path)
 #endif
 
   buffy = (BUFFY *) safe_calloc (1, sizeof (BUFFY));
-  strfcpy (buffy->path, path, sizeof (buffy->path));
+  buffy->path = safe_strdup(path);
 #ifdef USE_SIDEBAR
   r = realpath (path, rp);
   strfcpy (buffy->realpath, r ? rp : path, sizeof (buffy->realpath));
@@ -223,8 +223,10 @@ static BUFFY *buffy_new (const char *path)
 
 static void buffy_free (BUFFY **mailbox)
 {
-  if (mailbox && *mailbox)
+  if (mailbox && *mailbox) {
+    FREE (&(*mailbox)->path);
     FREE (&(*mailbox)->desc);
+  }
   FREE (mailbox); /* __FREE_CHECKED__ */
 }
 
@@ -387,7 +389,7 @@ static int buffy_maildir_dir_hasnew(BUFFY* mailbox, const char *dir_name)
 int mutt_parse_virtual_mailboxes (BUFFER *path, BUFFER *s, unsigned long data, BUFFER *err)
 {
   BUFFY **tmp;
-  char buf[_POSIX_PATH_MAX];
+  char *buf; /* notmuch query might be longer than _POSIX_PATH_MAX */
 
   while (MoreArgs (s))
   {
@@ -400,12 +402,12 @@ int mutt_parse_virtual_mailboxes (BUFFER *path, BUFFER *s, unsigned long data, B
       continue;
 
     mutt_extract_token (path, s, 0);
-    strfcpy (buf, path->data, sizeof (buf));
-
-    /* Skip empty tokens. */
-    if(!*buf) {
-	    FREE(&desc);
-	    continue;
+    if (path->data && *path->data) {
+       buf = safe_strdup(path->data);
+     } else {
+       /* skip empty tokens */
+       FREE(&desc);
+       continue;
     }
 
     /* avoid duplicates */
@@ -413,7 +415,7 @@ int mutt_parse_virtual_mailboxes (BUFFER *path, BUFFER *s, unsigned long data, B
     {
       if (mutt_strcmp (buf, (*tmp)->path) == 0)
       {
-	dprint(3,(debugfile,"vistual mailbox '%s' already registered as '%s'\n", buf, (*tmp)->path));
+	dprint(3,(debugfile,"virtual mailbox '%s' already registered as '%s'\n", buf, (*tmp)->path));
 	break;
       }
     }
@@ -426,6 +428,8 @@ int mutt_parse_virtual_mailboxes (BUFFER *path, BUFFER *s, unsigned long data, B
     (*tmp)->newly_created = 0;
     (*tmp)->size = 0;
     (*tmp)->desc = desc;
+
+		FREE(&buf);
   }
   return 0;
 }
